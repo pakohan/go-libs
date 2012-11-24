@@ -1,10 +1,10 @@
-package trans
+package mysql
 
 import (
+	"strings"
 	"fmt"
 	"github.com/ziutek/mymysql/mysql"
 	_ "github.com/ziutek/mymysql/native" // Native engine
-	"strings"
 )
 
 type TransactionError struct {
