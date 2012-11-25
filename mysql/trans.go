@@ -14,24 +14,25 @@ type transactionError struct {
 	message string
 }
 
-//Provides a simple container for the query parameters of an transaction
+// Provides a simple container for the query parameters of an transaction
 type TransactionQuery struct {
 	Database, Table string
 	Columns         []string
 }
 
-//Our class to handle transactions with
+// Our class to handle transactions with
 type Transaction struct {
 	stmt mysql.Stmt
 	transaction mysql.Transaction
 	numParams int
 }
 
-//To implement the error interface
+// To implement the error interface
 func (te transactionError) Error() string {
 	return te.message
 }
 
+// Allocates a new transaction
 func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction, error) {
 	if len(query.Columns) < 1 {
 		return nil, transactionError{"Too few columns"}
@@ -50,6 +51,7 @@ func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction
 	return &Transaction{trans.Do(ins), trans, len(query.Columns)}, nil
 }
 
+// inserts everything from the channel until it gets closed
 func (trans *Transaction) BeginInsert(c chan []interface{}, mut chan int) {
 	for {
 		params, ok := <-c
