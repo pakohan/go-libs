@@ -33,7 +33,7 @@ func (te transactionError) Error() string {
 }
 
 type Entry interface {
-	GetParams() []interface{}
+	GetParams() ([]interface{})
 }
 
 // Allocates a new transaction
@@ -47,6 +47,8 @@ func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction
 		return nil, transactionError{"Error creating prepared Statement"}
 	}
 
+	fmt.Println(ins)
+
 	trans, err := connection.Begin()
 	if err != nil {
 		return nil, transactionError{"Error creating Transaction"}
@@ -56,7 +58,7 @@ func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction
 }
 
 // inserts everything from the channel until it gets closed
-func (trans *Transaction) BeginInsert(c chan Entry, mut chan int) {
+func (trans *Transaction) BeginInsert(c chan *Entry, mut chan int) {
 	for {
 		entry, ok := <-c
 		if !ok {
