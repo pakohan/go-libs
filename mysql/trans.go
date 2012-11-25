@@ -69,7 +69,7 @@ func (trans *Transaction) BeginInsert(c chan Entry, mut chan int) {
 		if len(entries) == trans.numParams {
 			_, err := trans.stmt.Run(entries)
 			if err != nil {
-				fmt.Println(err)
+				panic(err)
 			}
 		} else {
 			fmt.Println("Error: arguments count does not match")
