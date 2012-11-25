@@ -32,8 +32,8 @@ func (te transactionError) Error() string {
 	return te.message
 }
 
-type Entry struct {
-	GetParams func() []interface{}
+type Entry interface {
+	GetParams() []interface{}
 }
 
 // Allocates a new transaction
