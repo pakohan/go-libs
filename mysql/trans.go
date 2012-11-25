@@ -33,7 +33,7 @@ func (te transactionError) Error() string {
 }
 
 type Entry interface {
-	func getParams() []interface{}
+	getParams() []interface{}
 }
 
 // Allocates a new transaction
