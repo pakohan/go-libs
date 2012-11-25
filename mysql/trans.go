@@ -32,6 +32,10 @@ func (te transactionError) Error() string {
 	return te.message
 }
 
+type Entry interface {
+	func getParams() []interface{}
+}
+
 // Allocates a new transaction
 func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction, error) {
 	if len(query.Columns) < 1 {
@@ -52,15 +56,16 @@ func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction
 }
 
 // inserts everything from the channel until it gets closed
-func (trans *Transaction) BeginInsert(c chan []interface{}, mut chan int) {
+func (trans *Transaction) BeginInsert(c chan Entry, mut chan int) {
 	for {
-		params, ok := <-c
+		entry, ok := <-c
 		if !ok {
 			break
 		}
 
-		if len(params) == trans.numParams {
-			_, err := trans.stmt.Run(params)
+		entries := entry.getParams()
+		if len(entries) == trans.numParams {
+			_, err := trans.stmt.Run(entries)
 			if err != nil {
 				fmt.Println(err)
 			}
