@@ -33,7 +33,7 @@ func (te transactionError) Error() string {
 }
 
 type Entry interface {
-	getParams() []interface{}
+	GetParams() []interface{}
 }
 
 // Allocates a new transaction
@@ -63,7 +63,7 @@ func (trans *Transaction) BeginInsert(c chan Entry, mut chan int) {
 			break
 		}
 
-		entries := entry.getParams()
+		entries := entry.GetParams()
 		if len(entries) == trans.numParams {
 			_, err := trans.stmt.Run(entries)
 			if err != nil {
