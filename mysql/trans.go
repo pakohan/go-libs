@@ -58,7 +58,7 @@ func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction
 }
 
 // inserts everything from the channel until it gets closed
-func (trans *Transaction) BeginInsert(c chan *Entry, mut chan int) {
+func (trans *Transaction) BeginInsert(c chan Entry, mut chan int) {
 	for {
 		entry, ok := <-c
 		if !ok {
