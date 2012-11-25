@@ -43,13 +43,10 @@ func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction
 	}
 
 	sss := fmt.Sprintf("INSERT INTO %s.%s (%s) VALUES (?%s)", query.Database, query.Table, strings.Join(query.Columns, ", "), strings.Repeat(", ?", len(query.Columns)-1))
-	fmt.Println(sss)
 	ins, err := connection.Prepare(sss)
 	if err != nil {
 		return nil, transactionError{"Error creating prepared Statement"}
 	}
-
-	fmt.Println(ins)
 
 	trans, err := connection.Begin()
 	if err != nil {
@@ -61,6 +58,8 @@ func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction
 
 // inserts everything from the channel until it gets closed
 func (trans *Transaction) BeginInsert(c chan Entry, mut chan int) {
+	defer trans.transaction.Commit()
+
 	for {
 		entry, ok := <-c
 		if !ok {
@@ -68,8 +67,9 @@ func (trans *Transaction) BeginInsert(c chan Entry, mut chan int) {
 		}
 
 		entries := entry.GetParams()
+
 		if len(entries) == trans.numParams {
-			_, err := trans.stmt.Run(entries)
+			_, err := trans.stmt.Run(entries...)
 			if err != nil {
 				panic(err)
 			}
@@ -78,6 +78,5 @@ func (trans *Transaction) BeginInsert(c chan Entry, mut chan int) {
 		}
 	}
 
-	trans.transaction.Commit()
 	mut <- 0
 }
