@@ -45,12 +45,12 @@ func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction
 	sss := fmt.Sprintf("INSERT INTO %s.%s (%s) VALUES (?%s)", query.Database, query.Table, strings.Join(query.Columns, ", "), strings.Repeat(", ?", len(query.Columns)-1))
 	ins, err := connection.Prepare(sss)
 	if err != nil {
-		return nil, transactionError{"Error creating prepared Statement"}
+		return nil, err
 	}
 
 	trans, err := connection.Begin()
 	if err != nil {
-		return nil, transactionError{"Error creating Transaction"}
+		return nil, err
 	}
 
 	return &Transaction{trans.Do(ins), trans, len(query.Columns)}, nil
