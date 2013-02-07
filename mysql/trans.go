@@ -42,7 +42,7 @@ func NewTransaction(connection mysql.Conn, query TransactionQuery) (*Transaction
 		return nil, transactionError{"Too few columns"}
 	}
 
-	sss := fmt.Sprintf("INSERT INTO `%s`.`%s` (`%s`) VALUES (?%s)", query.Database, query.Table, strings.Join(query.Columns, "`, `"), strings.Repeat(", ?", len(query.Columns)-1))
+	sss := fmt.Sprintf("INSERT IGNORE INTO `%s`.`%s` (`%s`) VALUES (?%s)", query.Database, query.Table, strings.Join(query.Columns, "`, `"), strings.Repeat(", ?", len(query.Columns)-1))
 	ins, err := connection.Prepare(sss)
 	if err != nil {
 		return nil, err
