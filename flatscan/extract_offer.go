@@ -9,16 +9,16 @@ import (
 )
 
 type FlatOffer struct {
-	RentN        int64
-	Zip          int64
-	District     string
-	Street       string
-	Rooms        float64
-	Size         string
-	Url          string
-	Description  string
-	Valid        bool
-	CreationTime int64
+	RentN       int64
+	Zip         int64
+	District    string
+	Street      string
+	Rooms       float64
+	Size        string
+	Url         string
+	Description string
+	TimeUpdated int64
+	Valid       bool
 }
 
 const (
@@ -121,7 +121,7 @@ func CheckOffer(offer *FlatOffer) (isWanted bool) {
 }
 
 func GetOffer(doc *goquery.Document) (offer *FlatOffer) {
-	offer = &FlatOffer{Valid: true, CreationTime: time.Now().Unix()}
+	offer = &FlatOffer{Valid: true, TimeUpdated: time.Now().Unix()}
 
 	rentS := fmt.Sprintf("%v", doc.Find("#viewad-price").Get(0).FirstChild.Data)
 	offer.RentN = getRent(rentS)
