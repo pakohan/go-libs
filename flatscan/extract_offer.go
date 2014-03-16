@@ -5,18 +5,20 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type FlatOffer struct {
-	RentN       int64
-	Zip         int64
-	District    string
-	Street      string
-	Rooms       float64
-	Size        string
-	Url         string
-	Description string
-	Valid       bool
+	RentN        int64
+	Zip          int64
+	District     string
+	Street       string
+	Rooms        float64
+	Size         string
+	Url          string
+	Description  string
+	Valid        bool
+	CreationTime int64
 }
 
 const (
@@ -119,7 +121,7 @@ func CheckOffer(offer *FlatOffer) (isWanted bool) {
 }
 
 func GetOffer(doc *goquery.Document) (offer *FlatOffer) {
-	offer = &FlatOffer{Valid: true}
+	offer = &FlatOffer{Valid: true, CreationTime: time.Now().Unix()}
 
 	rentS := fmt.Sprintf("%v", doc.Find("#viewad-price").Get(0).FirstChild.Data)
 	offer.RentN = getRent(rentS)
