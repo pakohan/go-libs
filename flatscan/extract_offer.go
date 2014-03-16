@@ -19,6 +19,7 @@ type FlatOffer struct {
 	Description string
 	TimeUpdated int64
 	Valid       bool
+	ID          string
 }
 
 const (
