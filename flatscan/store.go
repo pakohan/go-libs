@@ -14,8 +14,8 @@ type Entity interface {
 }
 
 type Counter struct {
-	ZipCodes int64
-	Offers   int64
+	ZipCodes int
+	Offers   int
 }
 
 func (c Counter) Key() string {
@@ -39,7 +39,7 @@ func InitCounter(c appengine.Context) {
 }
 
 func StoreEntity(c appengine.Context, e Entity) {
-	item := appengine.Item{Key: e.Key(), Object: e}
+	item := datastore.Item{Key: e.Key(), Object: e}
 
 	memcache.Add(c, item)
 
@@ -69,7 +69,7 @@ func GetEntity(c appengine.Context, e Entity, dst interface{}) {
 	datastore.NewQuery(e.Type()).Filter("__key__ =", e.AEKey(c)).GetAll(c, dst)
 }
 
-func getFromCache(c appengine.Context, e *Entity) interface{} {
+func getFromCache(c appengine.Context, e Entity) interface{} {
 	item, err := Get(c, e.Key())
 	if err == nil && item != nil {
 		return item.Object

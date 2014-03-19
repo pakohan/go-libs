@@ -1,8 +1,12 @@
 package flatscan
 
 import (
+	"appengine"
+	"appengine/datastore"
+	"crypto/md5"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"io"
 	"strconv"
 	"strings"
 	"time"
