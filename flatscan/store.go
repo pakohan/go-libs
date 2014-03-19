@@ -39,7 +39,7 @@ func InitCounter(c appengine.Context) {
 }
 
 func StoreEntity(c appengine.Context, e Entity) {
-	item := datastore.Item{Key: e.Key(), Object: e}
+	item := memcache.Item{Key: e.Key(), Object: e}
 
 	memcache.Add(c, item)
 
@@ -52,7 +52,7 @@ func Exists(c appengine.Context, e Entity) bool {
 		return true
 	}
 
-	amount, err := datastore.NewQuery(e.Type()).Filter("__key__ =", key).Count(c)
+	amount, err := datastore.NewQuery(e.Type()).Filter("__key__ =", e.AEKey(c)).Count(c)
 	if amount > 0 && err == nil {
 		return true
 	}
@@ -60,17 +60,8 @@ func Exists(c appengine.Context, e Entity) bool {
 	return false
 }
 
-func GetEntity(c appengine.Context, e Entity, dst interface{}) {
-	item := getFromCache(c, e)
-	if item != nil {
-		dst = append(dst, item)
-	}
-
-	datastore.NewQuery(e.Type()).Filter("__key__ =", e.AEKey(c)).GetAll(c, dst)
-}
-
 func getFromCache(c appengine.Context, e Entity) interface{} {
-	item, err := Get(c, e.Key())
+	item, err := memcache.Get(c, e.Key())
 	if err == nil && item != nil {
 		return item.Object
 	}
