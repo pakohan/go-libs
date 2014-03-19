@@ -39,7 +39,7 @@ func InitCounter(c appengine.Context) {
 }
 
 func StoreEntity(c appengine.Context, e Entity) {
-	item := memcache.Item{Key: e.Key(), Object: e}
+	item := &memcache.Item{Key: e.Key(), Object: e}
 
 	memcache.Add(c, item)
 
