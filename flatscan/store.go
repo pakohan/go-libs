@@ -4,7 +4,6 @@ import (
 	"appengine"
 	"appengine/datastore"
 	"appengine/memcache"
-	"crypto/md5"
 )
 
 type Entity interface {
