@@ -85,7 +85,7 @@ func getRent(rent string) (rentN int64, err error) {
 }
 
 func getAttributes(c appengine.Context, sel *goquery.Selection, index int) (attribute string) {
-	if len(sel.Nodes) < index {
+	if len(sel.Nodes) > index {
 		return strings.Trim(sel.Nodes[index].FirstChild.Data, "\n\t ")
 	} else {
 		c.Infof(fmt.Sprintf("%v; %d", sel.Nodes, index))
