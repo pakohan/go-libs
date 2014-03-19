@@ -161,8 +161,7 @@ func GetOffer(doc *goquery.Document) (offer *FlatOffer, err error) {
 
 	offer.Zip, offer.District = getZIPCode(getAttributes(sel, index))
 	index++
-	offer.Rooms, err = getRooms(getAttributes(sel, index))
-	offer.Rooms = 0.0
+	offer.Rooms, _ = getRooms(getAttributes(sel, index))
 
 	index++
 	offer.Size = getAttributes(sel, index)
