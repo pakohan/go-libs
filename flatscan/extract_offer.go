@@ -84,9 +84,11 @@ func getRent(rent string) (rentN int64, err error) {
 	return
 }
 
-func getAttributes(sel *goquery.Selection, index int) (attribute string) {
+func getAttributes(c appengine.Context, sel *goquery.Selection, index int) (attribute string) {
 	if len(sel.Nodes) < index {
 		return strings.Trim(sel.Nodes[index].FirstChild.Data, "\n\t ")
+	} else {
+		c.Infof(fmt.Sprintf("%v; %d", sel.Nodes, index))
 	}
 
 	return
@@ -141,30 +143,27 @@ func CheckOffer(offer *FlatOffer) (isWanted bool) {
 	return true
 }
 
-func GetOffer(doc *goquery.Document) (offer *FlatOffer, err error) {
+func GetOffer(doc *goquery.Document, c appengine.Context) (offer *FlatOffer, err error) {
 	offer = &FlatOffer{Valid: true, TimeUpdated: time.Now().Unix()}
 
 	rentS := fmt.Sprintf("%v", doc.Find("#viewad-price").Get(0).FirstChild.Data)
-	offer.RentN, err = getRent(rentS)
-	if err != nil {
-		return nil, err
-	}
+	offer.RentN, _ = getRent(rentS)
 
 	sel := doc.Find(".c-attrlist > dd").Find("span")
 
 	index := 1
 
 	if len(sel.Nodes) == 5 {
-		offer.Street = getAttributes(sel, index)
+		offer.Street = getAttributes(c, sel, index)
 		index++
 	}
 
-	offer.Zip, offer.District = getZIPCode(getAttributes(sel, index))
+	offer.Zip, offer.District = getZIPCode(getAttributes(c, sel, index))
 	index++
-	offer.Rooms, _ = getRooms(getAttributes(sel, index))
+	offer.Rooms, _ = getRooms(getAttributes(c, sel, index))
 
 	index++
-	offer.Size = getAttributes(sel, index)
+	offer.Size = getAttributes(c, sel, index)
 
 	/*
 	   offer.Description = doc.Find("#viewad-description-text").Text()
