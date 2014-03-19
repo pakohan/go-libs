@@ -22,6 +22,20 @@ type FlatOffer struct {
 	ID          string
 }
 
+func (f FlatOffer) Key() string {
+	md5Writer := md5.New()
+	io.WriteString(md5Writer, f.Url)
+	return fmt.Sprintf("%x", md5Writer.Sum(nil))
+}
+
+func (f FlatOffer) Type() string {
+	return "FlatOffer"
+}
+
+func (f FlatOffer) AEKey(con appengine.Context) *datastore.Key {
+	return datastore.NewKey(con, "counter", f.Key(), 0, nil)
+}
+
 const (
 	maxRent  int64   = 600
 	minRooms float64 = 2
@@ -35,11 +49,9 @@ var districts []string = []string{"mitte", "friedrichshain", "prenzlauer", "kreu
 
 func ExtractLinks(doc *goquery.Document) (urls []string) {
 	doc.Find(".ad-title").Each(func(i int, adTitle *goquery.Selection) {
-		url, valid := adTitle.First().Attr("href")
-		if valid {
+		url, exists := adTitle.First().Attr("href")
+		if exists {
 			urls = append(urls, url)
-		} else {
-			fmt.Errorf(url)
 		}
 	})
 
@@ -49,7 +61,7 @@ func ExtractLinks(doc *goquery.Document) (urls []string) {
 // func getRent converts a string containing the rent of a flat to an integer
 // for example:
 //  "Kaltmiete 1.150 EUR VB" becomes '1150'
-func getRent(rent string) (rentN int64) {
+func getRent(rent string) (rentN int64, err error) {
 	// remove "Kaltmiete: "
 	rent = rent[11:]
 
@@ -62,14 +74,18 @@ func getRent(rent string) (rentN int64) {
 		integer := strings.Replace(rentParts[0], ".", "", -1)
 
 		// convert to integer
-		rentN, _ = strconv.ParseInt(integer, 10, 64)
+		rentN, err = strconv.ParseInt(integer, 10, 64)
 	}
 
 	return
 }
 
 func getAttributes(sel *goquery.Selection, index int) (attribute string) {
-	return strings.Trim(sel.Nodes[index].FirstChild.Data, "\n\t ")
+	if len(sel.Nodes) < index {
+		return strings.Trim(sel.Nodes[index].FirstChild.Data, "\n\t ")
+	}
+
+	return
 }
 
 func getZIPCode(location string) (zip int64, district string) {
@@ -86,14 +102,14 @@ func getZIPCode(location string) (zip int64, district string) {
 	return
 }
 
-func getRooms(rooms string) (roomsN float64) {
+func getRooms(rooms string) (roomsN float64, err error) {
 	if strings.Contains(rooms, ">") || strings.Contains(rooms, "<") {
 		rooms = strings.SplitN(rooms, " ", 2)[1]
 	}
 
 	rooms = strings.Replace(rooms, ".", ",", -1)
 
-	roomsN, _ = strconv.ParseFloat(rooms, 64)
+	roomsN, err = strconv.ParseFloat(rooms, 64)
 
 	return
 }
@@ -121,11 +137,14 @@ func CheckOffer(offer *FlatOffer) (isWanted bool) {
 	return true
 }
 
-func GetOffer(doc *goquery.Document) (offer *FlatOffer) {
+func GetOffer(doc *goquery.Document) (offer *FlatOffer, err error) {
 	offer = &FlatOffer{Valid: true, TimeUpdated: time.Now().Unix()}
 
 	rentS := fmt.Sprintf("%v", doc.Find("#viewad-price").Get(0).FirstChild.Data)
-	offer.RentN = getRent(rentS)
+	offer.RentN, err = getRent(rentS)
+	if err != nil {
+		return nil, err
+	}
 
 	sel := doc.Find(".c-attrlist > dd").Find("span")
 
@@ -138,14 +157,20 @@ func GetOffer(doc *goquery.Document) (offer *FlatOffer) {
 
 	offer.Zip, offer.District = getZIPCode(getAttributes(sel, index))
 	index++
-	offer.Rooms = getRooms(getAttributes(sel, index))
+	offer.Rooms, err = getRooms(getAttributes(sel, index))
+	if err != nil {
+		return nil, err
+	}
+
 	index++
 	offer.Size = getAttributes(sel, index)
 
-	offer.Description = doc.Find("#viewad-description-text").Text()
-	if len(offer.Description) > 500 {
-		offer.Description = offer.Description[:499]
-	}
+	/*
+	   offer.Description = doc.Find("#viewad-description-text").Text()
+	   	if len(offer.Description) > 500 {
+	   		offer.Description = offer.Description[:499]
+	   	}
+	*/
 
 	return
 }
