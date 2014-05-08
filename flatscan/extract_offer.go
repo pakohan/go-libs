@@ -26,6 +26,10 @@ type FlatOffer struct {
 	ID          string
 }
 
+type Context interface {
+	Infof(format string, args ...interface{})
+}
+
 func (f FlatOffer) Key() string {
 	md5Writer := md5.New()
 	io.WriteString(md5Writer, f.Url)
@@ -34,10 +38,6 @@ func (f FlatOffer) Key() string {
 
 func (f FlatOffer) Type() string {
 	return "FlatOffer"
-}
-
-func (f FlatOffer) AEKey(con appengine.Context) *datastore.Key {
-	return datastore.NewKey(con, "counter", f.Key(), 0, nil)
 }
 
 const (
@@ -84,7 +84,7 @@ func getRent(rent string) (rentN int64, err error) {
 	return
 }
 
-func getAttributes(c appengine.Context, sel *goquery.Selection, index int) (attribute string) {
+func getAttributes(c Context, sel *goquery.Selection, index int) (attribute string) {
 	if len(sel.Nodes) > index {
 		return strings.Trim(sel.Nodes[index].FirstChild.Data, "\n\t ")
 	} else {
@@ -100,7 +100,7 @@ func getZIPCode(location string) (zip int64, district string) {
 	// convert to integer
 	zip, err := strconv.ParseInt(locationParts[0], 10, 64)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("getZIPCode", err)
 	}
 
 	district = locationParts[len(locationParts)-1]
@@ -143,27 +143,21 @@ func CheckOffer(offer *FlatOffer) (isWanted bool) {
 	return true
 }
 
-func GetOffer(doc *goquery.Document, c appengine.Context) (offer *FlatOffer, err error) {
+func GetOffer(doc *goquery.Document, c Context) (offer *FlatOffer, err error) {
 	offer = &FlatOffer{Valid: true, TimeUpdated: time.Now().Unix()}
 
 	rentS := fmt.Sprintf("%v", doc.Find("#viewad-price").Get(0).FirstChild.Data)
 	offer.RentN, _ = getRent(rentS)
 
+	offer.Street = getAttributes(c, doc.Find("#street-address"), 0)
+
+	offer.Zip, offer.District = getZIPCode(getAttributes(c, doc.Find("#viewad-locality"), 0))
+
 	sel := doc.Find(".c-attrlist > dd").Find("span")
 
-	index := 1
+	offer.Rooms, _ = getRooms(getAttributes(c, sel, 3))
 
-	if len(sel.Nodes) == 5 {
-		offer.Street = getAttributes(c, sel, index)
-		index++
-	}
-
-	offer.Zip, offer.District = getZIPCode(getAttributes(c, sel, index))
-	index++
-	offer.Rooms, _ = getRooms(getAttributes(c, sel, index))
-
-	index++
-	offer.Size = getAttributes(c, sel, index)
+	offer.Size = getAttributes(c, sel, 4)
 
 	/*
 	   offer.Description = doc.Find("#viewad-description-text").Text()
@@ -173,4 +167,8 @@ func GetOffer(doc *goquery.Document, c appengine.Context) (offer *FlatOffer, err
 	*/
 
 	return
+}
+
+func (f FlatOffer) AEKey(con appengine.Context) *datastore.Key {
+	return datastore.NewKey(con, "counter", f.Key(), 0, nil)
 }
