@@ -1,5 +1,6 @@
 package flatscan
 
+/*
 import (
 	"appengine"
 	"appengine/datastore"
@@ -67,3 +68,4 @@ func getFromCache(c appengine.Context, e Entity) interface{} {
 
 	return nil
 }
+*/
