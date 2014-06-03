@@ -25,6 +25,7 @@ type FlatOffer struct {
 	TimeUpdated int64
 	Valid       bool
 	ID          string
+	Title       string
 }
 
 type Context interface {
