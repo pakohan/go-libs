@@ -155,6 +155,8 @@ func GetOffer(doc *goquery.Document, c Context) (offer *FlatOffer, err error) {
 
 	offer.Size = getSize(getAttributes(c, sel, 1))
 
+	offer.Title = getAttributes(c, doc.Find("#viewad-title"), 0)
+
 	/*
 		offer.Description = doc.Find("#viewad-description-text").Text()
 		if len(offer.Description) > 500 {
