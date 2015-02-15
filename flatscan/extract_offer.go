@@ -1,16 +1,18 @@
 package flatscan
 
 import (
+	"regexp"
 	//"appengine"
 	//"appengine/datastore"
-	"code.google.com/p/go.net/html"
 	"crypto/md5"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"io"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/html"
 )
 
 type FlatOffer struct {
@@ -80,16 +82,6 @@ func getRent(rent string) (rentN float64, err error) {
 	return
 }
 
-func getAttributes(c Context, sel *goquery.Selection, index int) (attribute string) {
-	if len(sel.Nodes) > index {
-		return strings.Trim(sel.Nodes[index].FirstChild.Data, "\n\t ")
-	} else {
-		//c.Infof(fmt.Sprintf("%v; %d", sel.Nodes, index))
-	}
-
-	return
-}
-
 func getZIPCode(location string) (zip int64, district string) {
 	locationParts := strings.Split(location, " ")
 
@@ -129,6 +121,19 @@ func getRooms(rooms string) (roomsN float64, err error) {
 	return
 }
 
+func getAttributes(c Context, sel *goquery.Selection, index int) (attribute string) {
+	if len(sel.Nodes) > index {
+		attribute = strings.Trim(sel.Nodes[index].FirstChild.Data, "\n\t ")
+		c.Infof(attribute)
+	} else {
+		//c.Infof(fmt.Sprintf("%v; %d", sel.Nodes, index))
+	}
+
+	return
+}
+
+var _REGEX_SIZE = regexp.MustCompile(`\s*Zimmer:\s*(\d+(?:[.,]\d+)?)\s*Quadratmeter:\s*(\d+(?:[.,]\d+)?)`)
+
 func GetOffer(doc *goquery.Document, c Context) (offer *FlatOffer, err error) {
 	offer = &FlatOffer{Valid: true, TimeUpdated: time.Now().Unix()}
 
@@ -149,11 +154,13 @@ func GetOffer(doc *goquery.Document, c Context) (offer *FlatOffer, err error) {
 
 	offer.Zip, offer.District = getZIPCode(getAttributes(c, doc.Find("#viewad-locality"), 0))
 
-	sel := doc.Find("#viewad-attributes > dd > span")
+	sel := doc.Find("#viewad-details > section > dl:nth-child(4)").Text()
 
-	offer.Rooms, _ = getRooms(getAttributes(c, sel, 0))
-
-	offer.Size = getSize(getAttributes(c, sel, 1))
+	parts := _REGEX_SIZE.FindStringSubmatch(sel)
+	if len(parts) == 3 {
+		offer.Rooms, _ = getRooms(parts[1])
+		offer.Size = getSize(parts[2])
+	}
 
 	offer.Title = getAttributes(c, doc.Find("#viewad-title"), 0)
 
